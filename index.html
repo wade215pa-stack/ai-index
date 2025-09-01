@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jarvae Diamond Protocol — Wizard v1.5.0</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Matrix Rain BG -->
+  <canvas id="matrixCanvas" class="matrix-canvas" aria-hidden="true"></canvas>
+
+  <!-- Audio -->
+  <audio id="retroLoop" preload="auto" loop>
+    <source src="assets/retro_intro.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="genSfx" preload="auto">
+    <source src="assets/matrix_generate.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="startSfx" preload="auto">
+    <source src="assets/start_click.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="introVoice" preload="auto">
+    <source src="assets/intro_voice.mp3" type="audio/mpeg">
+    <source src="assets/intro_voice.m4a" type="audio/mp4">
+  </audio>
+  <audio id="outroVoice" preload="auto">
+    <source src="assets/outro_voice.mp3" type="audio/mpeg">
+    <source src="assets/outro_voice.m4a" type="audio/mp4">
+  </audio>
+
+  <button id="audioToggle" class="audio-toggle" aria-label="Toggle sound">🔊</button>
+
+  <!-- Splash -->
+  <div id="splash" class="splash" role="dialog" aria-modal="true" aria-labelledby="splashTitle">
+    <div class="splash-inner">
+      <div class="logo-wrap"><span class="logo-rain" aria-hidden="true"></span><img src="assets/logo_matrix.png" alt="Jarvae Logo" class="splash-logo"></div>
+      <h1 id="splashTitle">Welcome to Jarvae Diamond Protocol</h1>
+      <p class="splash-sub">Adaptive AI. Business‑ready. Teen‑friendly.</p>
+      <div class="splash-grid">
+        <label class="bind-email">Bind trial to email (optional)
+          <input id="trialEmail" type="email" placeholder="you@business.com" value="Wade215pa@gmail.com">
+        </label>
+      </div>
+      <button id="splashStart" class="splash-btn">Start Jarvae AI</button>
+      <p class="splash-hint">Tap to begin · Audio will start</p>
+      <div class="matrix-rain" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <!-- Trial Modal -->
+  <div id="trialModal" class="trial-modal" aria-hidden="true" role="dialog" aria-labelledby="trialTitle">
+    <div class="trial-dialog">
+      <h3 id="trialTitle">Your 30‑day trial has ended</h3>
+      <p>To continue, pay once via Cash App or enter an activation code.</p>
+      <label>Activation code <input id="trialKey" placeholder="8‑digit code"></label>
+      <div class="trial-actions">
+        <button id="trialCash" class="trial-btn">Pay $50 with Cash App</button>
+        <button id="trialIPaid" class="trial-btn">I paid — email receipt</button>
+        <button id="trialClose" class="trial-btn">Close</button>
+        <button id="trialActivate" class="trial-btn trial-primary">Activate</button>
+      </div>
+      <p class="trial-fineprint">Operator rotates codes regularly. Old codes stop working after updates.</p>
+    </div>
+  </div>
+
+  <main class="wizard">
+    <aside class="brand">
+      <img class="brand-logo" src="assets/logo_matrix.png" alt="Jarvae">
+      <h1>Jarvae Diamond Protocol</h1>
+      <div class="trial-badge" id="trialBadge">Trial: calculating…</div>
+      <p class="tag">Fast, simple, teen‑friendly setup</p>
+      <div class="progress"><div class="bar" id="progressBar"></div></div>
+      <div class="opt-banner"><strong>Everything is optional.</strong> The more you answer, the deeper your prompt.</div>
+    </aside>
+
+    <section class="card">
+      <div class="step show" data-step="1">
+        <h2>Step 1 · About You</h2>
+        <div class="grid">
+          <label>Age Group
+            <select id="age"><option value="">Select…</option><option>13–17</option><option>18+</option></select>
+          </label>
+          <label>Role
+            <select id="role"><option>Producer</option><option>Rapper</option><option>Manager</option><option>Founder</option><option>Marketer</option></select>
+          </label>
+          <label>City
+            <select id="city"><option>Philadelphia</option><option>New York</option><option>Los Angeles</option><option>Chicago</option><option>Miami</option></select>
+          </label>
+        </div>
+        <div class="nav"><button class="skip-step">Skip this step</button><button class="next">Next ▸</button></div>
+      </div>
+
+      <div class="step" data-step="8">
+        <h2>Step 8 · Review</h2>
+        <div class="nav">
+          <button class="back">◂ Back</button>
+          <button id="generateBtn" class="primary">✓ Looks Good → Generate</button>
+        </div>
+        <h3>Your Prompt</h3>
+        <textarea id="output" rows="10" placeholder="Prompt will appear here…"></textarea>
+        <div class="row">
+          <button id="copyOpenChatGPT">Copy & Open ChatGPT</button>
+          <button id="copyOpenGemini">Copy & Open Gemini</button>
+          <button id="copyOpenGronk">Copy & Open Grok</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
