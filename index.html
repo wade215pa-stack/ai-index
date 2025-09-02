@@ -1,0 +1,281 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>JDP 2.2 — Artist Onboarding (4D)</title>
+  <link rel="icon" href="assets/logo_matrix.png">
+  <link rel="preload" href="assets/retro_intro.mp3" as="audio">
+  <link rel="preload" href="assets/intro_voice.m4a" as="audio">
+  <link rel="preload" href="assets/start_click.mp3" as="audio">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="skip" href="#form">Skip to form</a>
+
+  <!-- Background -->
+  <div id="bg" aria-hidden="true">
+    <!-- 4D Rain container -->
+    <div id="matrixRain" aria-hidden="true"></div>
+  </div>
+
+  <main id="app" class="card" role="main" aria-live="polite">
+    <header class="brand">
+      <picture class="matrix-logo">
+        <source srcset="assets/logo_matrix.webp" type="image/webp">
+        <img src="assets/logo_matrix.png" alt="JDP Logo" class="logo">
+      </picture>
+      <h1>Artist Onboarding</h1>
+      <p class="tag">Adaptive • Accessible • 4D Matrix Style</p>
+      <button id="need-help" class="linklike" type="button" aria-haspopup="dialog">Need help now?</button>
+    </header>
+
+    <!-- Quick Toggles -->
+    <section class="quick-toggles" aria-label="Accessibility controls">
+      <button id="toggle-contrast" type="button" class="pill" aria-pressed="false">High Contrast</button>
+      <button id="toggle-tts" type="button" class="pill" aria-pressed="false">Voice Guidance</button>
+      <button id="toggle-motion" type="button" class="pill" aria-pressed="false">Reduce Motion</button>
+      <button id="toggle-demo" type="button" class="pill" aria-pressed="true">Demo Mode</button>
+    </section>
+
+    <!-- Gate -->
+    <section class="gate" aria-label="Basic details">
+      <div class="row two">
+        <div>
+          <label for="name">Name<span aria-hidden="true"> *</span></label>
+          <input id="name" name="name" type="text" required autocomplete="name" placeholder="Your name" />
+        </div>
+        <div>
+          <label for="age">Age<span aria-hidden="true"> *</span></label>
+          <input id="age" name="age" type="number" min="6" max="120" inputmode="numeric" placeholder="e.g., 16" required />
+        </div>
+      </div>
+      <div class="row actions">
+        <button id="start" type="button" class="cta">Start</button>
+      </div>
+      <p class="hint">Fonts, spacing & motion adapt to your age group.</p>
+    </section>
+
+    <!-- Form -->
+    <form id="form" class="hidden" novalidate>
+      <!-- Location -->
+      <fieldset>
+        <legend>Where are you based?</legend>
+        <div class="row two">
+          <div>
+            <label for="state">State</label>
+            <select id="state" name="state" required>
+              <option value="" disabled selected>Select state</option>
+              <option>Pennsylvania</option><option>New York</option><option>New Jersey</option>
+              <option>Delaware</option><option>Maryland</option><option>California</option>
+              <option>Texas</option><option>Florida</option><option>Illinois</option>
+              <option>Georgia</option><option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="city">City</label>
+            <select id="city" name="city" required>
+              <option value="" disabled selected>Select city</option>
+              <option>Philadelphia</option><option>New York City</option><option>Los Angeles</option>
+              <option>Chicago</option><option>Dallas</option><option>Houston</option>
+              <option>Miami</option><option>Atlanta</option><option>Baltimore</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- Brand drives glyphs -->
+      <fieldset>
+        <legend>Brand / Artist Name</legend>
+        <div class="row">
+          <input id="brandName" name="brandName" type="text" maxlength="40" placeholder="Type your brand (live 4D preview)" />
+        </div>
+        <p class="muted small">Background rain updates to use your brand letters.</p>
+      </fieldset>
+
+      <!-- Artist identity -->
+      <fieldset>
+        <legend>What kind of artist are you?</legend>
+        <div class="choices grid">
+          <label class="check"><input type="checkbox" name="roles" value="Rapper">Rapper</label>
+          <label class="check"><input type="checkbox" name="roles" value="Producer">Producer/Beatmaker</label>
+          <label class="check"><input type="checkbox" name="roles" value="Singer">Singer/Vocalist</label>
+          <label class="check"><input type="checkbox" name="roles" value="DJ">DJ</label>
+          <label class="check"><input type="checkbox" name="roles" value="Painter">Painter</label>
+          <label class="check"><input type="checkbox" name="roles" value="Sculptor">Sculptor</label>
+          <label class="check"><input type="checkbox" name="roles" value="GraphicDesigner">Graphic Designer</label>
+          <label class="check"><input type="checkbox" name="roles" value="Illustrator">Illustrator</label>
+          <label class="check"><input type="checkbox" name="roles" value="Photographer">Photographer</label>
+          <label class="check"><input type="checkbox" name="roles" value="Videographer">Videographer</label>
+          <label class="check"><input type="checkbox" name="roles" value="Filmmaker">Filmmaker/Director</label>
+          <label class="check"><input type="checkbox" name="roles" value="Animator">Animator/Motion</label>
+          <label class="check"><input type="checkbox" name="roles" value="Other">Other</label>
+        </div>
+      </fieldset>
+
+      <!-- Experience -->
+      <fieldset>
+        <legend>Experience level</legend>
+        <div class="choices">
+          <label class="radio"><input type="radio" name="xp" value="New" required>New / Just starting</label>
+          <label class="radio"><input type="radio" name="xp" value="Intermediate">Intermediate</label>
+          <label class="radio"><input type="radio" name="xp" value="Pro">Pro / Touring / Exhibited</label>
+        </div>
+      </fieldset>
+
+      <!-- Goals -->
+      <fieldset>
+        <legend>Primary goals (choose up to 3)</legend>
+        <div class="choices grid">
+          <label class="check"><input type="checkbox" name="goals" value="Learn">Learn skills</label>
+          <label class="check"><input type="checkbox" name="goals" value="Create">Create a project</label>
+          <label class="check"><input type="checkbox" name="goals" value="Collaborate">Find collaborators</label>
+          <label class="check"><input type="checkbox" name="goals" value="Perform">Perform/Exhibit</label>
+          <label class="check"><input type="checkbox" name="goals" value="Monetize">Monetize</label>
+          <label class="check"><input type="checkbox" name="goals" value="Promo">Grow audience</label>
+          <label class="check"><input type="checkbox" name="goals" value="Mentor">Find a mentor</label>
+          <label class="check"><input type="checkbox" name="goals" value="Teach">Teach/Share</label>
+        </div>
+      </fieldset>
+
+      <!-- Social media (personal) -->
+      <fieldset>
+        <legend>Personal social media (select all that apply)</legend>
+        <details class="dropdown">
+          <summary>Select platforms</summary>
+          <div class="choices grid">
+            <label class="check"><input type="checkbox" name="social_personal" value="Instagram">Instagram</label>
+            <label class="check"><input type="checkbox" name="social_personal" value="TikTok">TikTok</label>
+            <label class="check"><input type="checkbox" name="social_personal" value="YouTube">YouTube</label>
+            <label class="check"><input type="checkbox" name="social_personal" value="Facebook">Facebook</label>
+            <label class="check"><input type="checkbox" name="social_personal" value="X">X (Twitter)</label>
+            <label class="check"><input type="checkbox" name="social_personal" value="Threads">Threads</label>
+            <label class="check"><input type="checkbox" name="social_personal" value="Snapchat">Snapchat</label>
+            <label class="check"><input type="checkbox" name="social_personal" value="SoundCloud">SoundCloud</label>
+            <label class="check"><input type="checkbox" name="social_personal" value="Spotify">Spotify Artist</label>
+            <label class="check"><input type="checkbox" name="social_personal" value="AppleMusic">Apple Music</label>
+            <label class="check"><input type="checkbox" name="social_personal" value="Bandcamp">Bandcamp</label>
+            <label class="check"><input type="checkbox" name="social_personal" value="LinkedIn">LinkedIn</label>
+            <label class="check"><input type="checkbox" name="social_personal" value="Behance">Behance</label>
+            <label class="check"><input type="checkbox" name="social_personal" value="Dribbble">Dribbble</label>
+            <label class="check"><input type="checkbox" name="social_personal" value="DeviantArt">DeviantArt</label>
+            <label class="check"><input type="checkbox" name="social_personal" value="Twitch">Twitch</label>
+            <label class="check"><input type="checkbox" name="social_personal" value="Discord">Discord</label>
+            <label class="check"><input type="checkbox" name="social_personal" value="Reddit">Reddit</label>
+            <label class="check"><input type="checkbox" name="social_personal" value="Pinterest">Pinterest</label>
+            <label class="check"><input type="checkbox" name="social_personal" value="Other">Other</label>
+          </div>
+        </details>
+      </fieldset>
+
+      <!-- Business -->
+      <fieldset>
+        <legend>Do you manage a business or group?</legend>
+        <div class="choices">
+          <label class="radio"><input type="radio" name="hasBiz" value="No" checked>No</label>
+          <label class="radio"><input type="radio" name="hasBiz" value="Yes">Yes</label>
+        </div>
+        <div id="bizBlock" class="hidden soft">
+          <div class="row">
+            <label for="bizName">Business/Group name</label>
+            <input id="bizName" name="bizName" type="text" placeholder="e.g., Ethel’s Bakery" />
+          </div>
+          <details class="dropdown">
+            <summary>Business social media (select all that apply)</summary>
+            <div class="choices grid">
+              <label class="check"><input type="checkbox" name="social_business" value="Instagram">Instagram</label>
+              <label class="check"><input type="checkbox" name="social_business" value="TikTok">TikTok</label>
+              <label class="check"><input type="checkbox" name="social_business" value="YouTube">YouTube</label>
+              <label class="check"><input type="checkbox" name="social_business" value="Facebook">Facebook</label>
+              <label class="check"><input type="checkbox" name="social_business" value="X">X (Twitter)</label>
+              <label class="check"><input type="checkbox" name="social_business" value="Threads">Threads</label>
+              <label class="check"><input type="checkbox" name="social_business" value="Snapchat">Snapchat</label>
+              <label class="check"><input type="checkbox" name="social_business" value="GoogleBusiness">Google Business</label>
+              <label class="check"><input type="checkbox" name="social_business" value="Yelp">Yelp</label>
+              <label class="check"><input type="checkbox" name="social_business" value="Tripadvisor">Tripadvisor</label>
+              <label class="check"><input type="checkbox" name="social_business" value="OpenTable">OpenTable</label>
+              <label class="check"><input type="checkbox" name="social_business" value="Shopify">Shopify</label>
+              <label class="check"><input type="checkbox" name="social_business" value="Etsy">Etsy</label>
+              <label class="check"><input type="checkbox" name="social_business" value="LinkedIn">LinkedIn</label>
+              <label class="check"><input type="checkbox" name="social_business" value="Other">Other</label>
+            </div>
+          </details>
+        </div>
+      </fieldset>
+
+      <!-- Guidance -->
+      <fieldset>
+        <legend>How much guidance do you want?</legend>
+        <div class="choices">
+          <label class="radio"><input type="radio" name="guidance" value="Low" required>Low (let me explore)</label>
+          <label class="radio"><input type="radio" name="guidance" value="Medium">Medium (tips & nudges)</label>
+          <label class="radio"><input type="radio" name="guidance" value="High">High (step-by-step)</label>
+        </div>
+      </fieldset>
+
+      <!-- Wellbeing -->
+      <fieldset>
+        <legend>How are you feeling today?</legend>
+        <div class="choices">
+          <label class="radio"><input type="radio" name="mood" value="Okay" required>I'm okay</label>
+          <label class="radio"><input type="radio" name="mood" value="Struggling">I'm struggling</label>
+          <label class="radio"><input type="radio" name="mood" value="Crisis">I'm in crisis / worried about safety</label>
+        </div>
+        <p class="muted small">We never judge. If you need help now, use “Need help now?”.</p>
+      </fieldset>
+
+      <!-- Optional style -->
+      <fieldset>
+        <legend>Describe your style (optional)</legend>
+        <input id="styleText" type="text" name="style" maxlength="160" placeholder="e.g., soulful, gritty, experimental" />
+      </fieldset>
+
+      <div class="row actions">
+        <button type="submit" class="cta">Finish</button>
+      </div>
+      <p id="status" class="status" aria-live="polite"></p>
+    </form>
+  </main>
+
+  <!-- Crisis Modal -->
+  <div id="crisis" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="crisisTitle">
+    <div class="modal-content" role="document">
+      <h2 id="crisisTitle">You're not alone. Help is available.</h2>
+      <ul>
+        <li id="localBlock" class="hidden"><strong>Local (based on your selection):</strong> <span id="localDesc"></span></li>
+        <li><strong>United States:</strong> Call or text <strong>988</strong> (Suicide & Crisis Lifeline). If you’re in immediate danger, call <strong>911</strong>.</li>
+        <li><strong>Text support (US/CA):</strong> Text <strong>HOME</strong> to <strong>741741</strong> (Crisis Text Line).</li>
+        <li><strong>Outside the US:</strong> Find local helplines at findahelpline.com or the IASP directory.</li>
+      </ul>
+      <div class="row actions">
+        <button id="copyHelp" class="pill" type="button">Copy numbers</button>
+        <button id="openFinder" class="pill" type="button">Find local helplines</button>
+        <button id="closeCrisis" class="cta" type="button">Close</button>
+      </div>
+      <p class="muted small">This app is not a medical service. If you or someone else is in danger, contact emergency services immediately.</p>
+    </div>
+  </div>
+
+  <!-- Audio -->
+  <audio id="bgm" preload="auto" loop>
+    <source src="assets/retro_intro.m4a" type="audio/mp4">
+    <source src="assets/retro_intro.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="voice" preload="auto">
+    <source src="assets/intro_voice.m4a" type="audio/mp4">
+    <source src="assets/intro_voice.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="click" preload="auto">
+    <source src="assets/start_click.m4a" type="audio/mp4">
+    <source src="assets/start_click.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="matrixFx" preload="auto">
+    <source src="assets/matrix_generate.m4a" type="audio/mp4">
+    <source src="assets/matrix_generate.mp3" type="audio/mpeg">
+  </audio>
+
+  <script src="script.js"></script>
+</body>
+</html>
