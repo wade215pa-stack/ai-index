@@ -1,239 +1,416 @@
-(()=>{
-  const VERSION='1.5.0'; const NS='jarvae_wizard_v'+VERSION.replace(/\./g,'_');
-  const $=(id)=>document.getElementById(id); const on=(sel,evt,fn)=>document.querySelectorAll(sel).forEach(el=>el.addEventListener(evt,fn));
+// Basic helpers
+const $ = (q, ctx=document) => ctx.querySelector(q);
+const $$ = (q, ctx=document) => Array.from(ctx.querySelectorAll(q));
 
-  // Elements
-  const splash=$('splash'), splashStart=$('splashStart'), trialEmailEl=$('trialEmail');
-  const retro=$('retroLoop'), genSfx=$('genSfx'), startSfx=$('startSfx'), introVoice=$('introVoice'), outroVoice=$('outroVoice');
-  const audioToggle=$('audioToggle');
+const state = {
+  tts: false,
+  reduceMotion: false,
+  highContrast: false,
+  ageGroup: 'adult',
+  crisisShown: false,
+};
 
-  // === Audio helpers ===
-  function fadeAudio(audio, targetVol, duration=800){
-    if(!audio) return;
-    const startVol = isNaN(audio.volume)?0.25:audio.volume;
-    const steps = 20, dt = duration/steps;
-    let i=0; const iv=setInterval(()=>{ i++; audio.volume = startVol + (targetVol - startVol) * (i/steps); if(i>=steps) clearInterval(iv); }, dt);
+// Audio
+const aBgm = $('#bgm');
+const aVoice = $('#voice');
+const aClick = $('#click');
+
+// UI elements
+const startBtn = $('#start');
+const gate = $('.gate');
+const form = $('#form');
+const statusEl = $('#status');
+const needHelp = $('#need-help');
+const crisis = $('#crisis');
+const closeCrisis = $('#closeCrisis');
+const copyHelp = $('#copyHelp');
+
+// Toggles
+const tContrast = $('#toggle-contrast');
+const tTts = $('#toggle-tts');
+const tMotion = $('#toggle-motion');
+
+// Business visibility
+const bizRadios = $$('input[name="hasBiz"]');
+const bizBlock = $('#bizBlock');
+
+// Safety keywords (simple client-side heuristic)
+const HARM_KEYWORDS = [
+  'suicide','suicidal','kill myself','end my life','self harm','self-harm','hurt myself',
+  'harm myself','i want to die','i want die','i dont want to live','cut myself','overdose'
+];
+
+function playClick(){ try{ aClick.currentTime = 0; aClick.play(); }catch(e){} }
+function speak(line){
+  if(!state.tts) return;
+  try{ aVoice.currentTime = 0; aVoice.play(); }catch(e){}
+  // Optional: use SpeechSynthesis for dynamic copy (fallback if voice file not desired)
+  // const u = new SpeechSynthesisUtterance(line); speechSynthesis.speak(u);
+}
+
+// Age-based adaptation
+function applyAgeGroup(age){
+  let group = 'adult';
+  const n = Number(age);
+  if(!isNaN(n)){
+    if(n < 18) group = 'teen';
+    else if(n >= 55) group = 'senior';
   }
-  audioToggle&&audioToggle.addEventListener('click', ()=>{
-    const muted = !(retro?.muted===false);
-    [retro, genSfx, startSfx, introVoice, outroVoice].forEach(a=>{ if(a){ a.muted = muted; }});
-    audioToggle.textContent = muted ? '🔇' : '🔊';
-  });
-
-  // Splash start → start audio + save email
-  splashStart && splashStart.addEventListener('click', ()=>{
-    try{ startSfx?.play().catch(()=>{});}catch(_){}
-    try{
-      if(retro){ retro.volume=0.22; retro.play().catch(()=>{}); }
-      if(introVoice){ introVoice.currentTime=0; introVoice.play().catch(()=>{}); }
-    }catch(_){}
-    if (trialEmailEl && trialEmailEl.value) { try { localStorage.setItem(NS+'_trial_email', trialEmailEl.value.trim()); } catch(_){ } }
-    splash?.classList.add('hidden');
-  });
-
-  // === Trial system (rotating unlock + Cash App) ===
-  const OP_EMAIL='Wade215pa@gmail.com';
-// === JDP Secure Unlock Patch (drop-in) ===
-// Place this BLOCK right AFTER: const OP_EMAIL = 'Wade215pa@gmail.com';
-
-// --- 1) Salted SHA-256 (no plain code stored) ---
-const UNLOCK_HASH = (function(){
-  // SHA-256 of 'JDP|05546719|v1.5.0' split in chunks to avoid string scans
-  const p1='d1cf34817a309dfaa61c', p2='fb34f5dadca9ba42ab37';
-  const p3='45665e98c64d3164e6d6', p4='1678';
-  return p1+p2+p3+p4;
-})();
-const SALT_PREFIX = 'JDP|';      // rotate if you want (must match generator)
-const SALT_SUFFIX = '|v1.5.0';   // rotate when you bump major build
-
-async function sha256Hex(msg){
-  const enc = new TextEncoder();
-  const buf = await crypto.subtle.digest('SHA-256', enc.encode(msg));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-
-// --- 2) Brute-force throttle (local only) ---
-const FAIL_KEY = NS+'_unlock_fails';
-function getFails(){
-  try{ return JSON.parse(localStorage.getItem(FAIL_KEY)||'{"n":0,"t":0}'); }catch(_){ return {n:0,t:0}; }
-}
-function setFails(x){
-  try{ localStorage.setItem(FAIL_KEY, JSON.stringify(x)); }catch(_){}
-}
-function canAttempt(){
-  const f = getFails();
-  const now = Date.now();
-  // lock 15 minutes after 5 failed tries
-  if(f.n >= 5 && now - f.t < 15*60*1000) return false;
-  return true;
-}
-function recordFail(){
-  const f = getFails(); f.n += 1; f.t = Date.now(); setFails(f);
-}
-function resetFails(){ setFails({n:0,t:0}); }
-
-// --- 3) Replace your existing tryActivate() with the one below ---
-// Find the old function and replace it entirely.
-async function tryActivate(){
-  if(!canAttempt()){ alert('Too many attempts — try again in ~15 minutes.'); return; }
-  const key = (trialKey && trialKey.value || '').trim();
-  let t = getTrial();
-
-  // Built-in extension codes remain
-  if(/^JDP-EXTEND-(\d+)$/.test(key)){
-    const extra = parseInt(RegExp.$1,10);
-    t.expires = (t.expires||Date.now()) + extra*86400000;
-    setTrial(t); updateBadge(); closeTrial(); resetFails();
-    alert(`Extended ${extra} days.`); return;
+  document.body.classList.remove('age-teen','age-adult','age-senior');
+  document.body.classList.add(`age-${group}`);
+  state.ageGroup = group;
+  // Seniors: default to reduced motion
+  if(group === 'senior'){
+    document.body.classList.add('reduce-motion');
+    tMotion.setAttribute('aria-pressed','true');
+    state.reduceMotion = true;
   }
+}
 
-  // Only check numeric codes 6–10 digits to avoid hashing junk
-  if(/^\d{6,10}$/.test(key)){
-    const calc = await sha256Hex(SALT_PREFIX + key + SALT_SUFFIX);
-    if(calc === UNLOCK_HASH){
-      t.expires = Date.now() + 365*86400000; // 1 year
-      setTrial(t); updateBadge(); closeTrial(); resetFails();
-      alert('Unlocked for 1 year.'); return;
+// Safety modal
+// Localize helpline guidance based on selected State/City
+const openFinder = $('#openFinder');
+const localBlock = $('#localBlock');
+const localDesc = $('#localDesc');
+const selState = $('#state');
+const selCity = $('#city');
+
+function mkFinderUrl(state, city){
+  // We use authoritative directories rather than hardcoded numbers.
+  // findahelpline.com covers international, 211.org covers US local services.
+  const baseUS = 'https://findahelpline.com/us';
+  const query = [city, state].filter(Boolean).join('%20');
+  // Provide a general US page, user can refine there.
+  return `${baseUS}`;
+}
+function mk211Url(state){
+  return `https://www.211.org/`;
+}
+
+function updateLocalHelplines(){
+  const st = selState?.value || '';
+  const ct = selCity?.value || '';
+  if(!st || st === 'Select state'){
+    localBlock?.classList.add('hidden');
+    return;
+  }
+  // Describe local guidance
+  const parts = [];
+  if(ct && ct !== 'Select city' && ct !== 'Other') parts.push(ct);
+  if(st && st !== 'Other') parts.push(st);
+  const place = parts.join(', ');
+  let desc = '';
+  if(place){
+    desc = `Dial 211 for local services in ${place}. You can also use the directory below to find helplines near you.`;
+  }else{
+    desc = `Dial 211 for local services in your state. You can also use the directory below to find helplines near you.`;
+  }
+  if(localDesc) localDesc.textContent = desc;
+  localBlock?.classList.remove('hidden');
+}
+
+openFinder?.addEventListener('click', () => {
+  const st = selState?.value || '';
+  const ct = selCity?.value || '';
+  const url = mkFinderUrl(st, ct);
+  window.open(url, '_blank', 'noopener,noreferrer');
+});
+
+['change','input'].forEach(evt => {
+  selState?.addEventListener(evt, updateLocalHelplines);
+  selCity?.addEventListener(evt, updateLocalHelplines);
+});
+// Also update when opening the crisis modal
+needHelp?.addEventListener('click', updateLocalHelplines);
+
+function showCrisis(){
+  if(state.crisisShown) return;
+  crisis.classList.remove('hidden');
+  crisis.setAttribute('aria-hidden','false');
+  $('#crisisTitle').focus({preventScroll:true});
+  state.crisisShown = true;
+  statusEl.textContent = 'Help resources shown.';
+}
+
+// Copy numbers
+copyHelp?.addEventListener('click', async () => {
+  const text = [
+    'US: Call/Text 988 (Suicide & Crisis Lifeline).',
+    'Immediate danger: 911.',
+    'US/CA Text: HOME to 741741 (Crisis Text Line).',
+    'Outside US: findahelpline.com or IASP directory.'
+  ].join('\n');
+  try{
+    await navigator.clipboard.writeText(text);
+    copyHelp.textContent = 'Copied ✅';
+    setTimeout(()=>copyHelp.textContent='Copy numbers', 2000);
+  }catch(e){ /* ignore */}
+});
+closeCrisis?.addEventListener('click', () => {
+  crisis.classList.add('hidden');
+  crisis.setAttribute('aria-hidden','true');
+  state.crisisShown = false;
+});
+needHelp?.addEventListener('click', showCrisis);
+
+// Toggle handlers
+tContrast?.addEventListener('click', () => {
+  const pressed = tContrast.getAttribute('aria-pressed') === 'true';
+  tContrast.setAttribute('aria-pressed', String(!pressed));
+  document.body.classList.toggle('high-contrast', !pressed);
+  state.highContrast = !pressed;
+});
+tTts?.addEventListener('click', () => {
+  const pressed = tTts.getAttribute('aria-pressed') === 'true';
+  tTts.setAttribute('aria-pressed', String(!pressed));
+  state.tts = !pressed;
+  if(state.tts) speak('Voice guidance enabled.');
+});
+tMotion?.addEventListener('click', () => {
+  const pressed = tMotion.getAttribute('aria-pressed') === 'true';
+  tMotion.setAttribute('aria-pressed', String(!pressed));
+  document.body.classList.toggle('reduce-motion', !pressed);
+  state.reduceMotion = !pressed;
+});
+
+// Start -> reveal form
+startBtn?.addEventListener('click', () => {
+  playClick();
+  const name = $('#name').value.trim();
+  const age = $('#age').value.trim();
+  if(!name || !age){
+    statusEl.textContent = 'Please enter your name and age to continue.';
+    return;
+  }
+  applyAgeGroup(age);
+  gate.classList.add('hidden');
+  form.classList.remove('hidden');
+  statusEl.textContent = `Welcome${name ? ', ' + name : ''}.`;
+  try{ aBgm.volume = 0.5; aBgm.loop = true; aBgm.play(); }catch(e){}
+});
+
+// Show/hide business block
+bizRadios.forEach(r => r.addEventListener('change', e => {
+  if(e.target.value === 'Yes') bizBlock.classList.remove('hidden');
+  else bizBlock.classList.add('hidden');
+}));
+
+// Wellbeing radio trigger
+$$('input[name="mood"]').forEach(r => r.addEventListener('change', e => {
+  const val = e.target.value;
+  if(val === 'Crisis') showCrisis();
+  if(val === 'Struggling'){
+    statusEl.textContent = 'Thanks for letting us know. If you want support now, tap “Need help now?”.';
+  }
+}));
+
+// Keyword watcher for text fields
+['styleText','name'].forEach(id => {
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('input', (e) => {
+    const v = (e.target.value || '').toLowerCase();
+    for(const k of HARM_KEYWORDS){
+      if(v.includes(k)){
+        showCrisis();
+        break;
+      }
     }
-  }
+  });
+});
 
-  recordFail();
-  alert('Invalid code. Request a fresh activation code from the operator.');
+// Submit
+form?.addEventListener('submit', (e) => {
+  e.preventDefault();
+  playClick();
+  // Soft validation: max 3 goals
+  const goals = $$('input[name="goals"]:checked');
+  if(goals.length > 3){
+    statusEl.textContent = 'Please select at most 3 goals.';
+    return;
+  }
+  // Collect payload
+  const data = new FormData(form);
+  const payload = {};
+  data.forEach((val, key) => {
+    if(payload[key]){
+      if(Array.isArray(payload[key])) payload[key].push(val);
+      else payload[key] = [payload[key], val];
+    } else {
+      payload[key] = val;
+    }
+  });
+  console.log('Form payload:', payload);
+  statusEl.textContent = 'Thanks! Your preferences are saved locally.';
+  speak('Form submitted. Thank you.');
+  // Optional: persist to localStorage
+  try{ localStorage.setItem('ai-index-onboarding', JSON.stringify(payload)); }catch(e){}
+});
+
+
+// ==== 4D Matrix Rain ====
+function initMatrixRain(){
+  const cont = document.getElementById('matrixRain');
+  if(!cont) return;
+  // Clear existing
+  cont.innerHTML = '';
+  const layers = [ {cls:'layer-1', count: 26, dur:[14,20]},
+                   {cls:'layer-2', count: 22, dur:[10,14]},
+                   {cls:'layer-3', count: 18, dur:[7,11]} ];
+  const glyphsJDP = 'JDPJDP◇◇◆◆△▽◬◭◮◈0123456789JDPJDP';
+  const glyphs = glyphsJDP;
+  function rand(a,b){ return Math.random()*(b-a)+a; }
+  function pick(s){ return s[Math.floor(Math.random()*s.length)]; }
+  layers.forEach(layer => {
+    const layerEl = document.createElement('div');
+    layerEl.className = layer.cls;
+    cont.appendChild(layerEl);
+    for(let i=0;i<layer.count;i++){
+      const div = document.createElement('div');
+      // 1 in 4 streams go red for POP
+      const red = Math.random() < 0.25;
+      div.className = red ? 'stream accent-red' : 'stream';
+      // Build a column of random glyphs
+      const len = Math.floor(rand(18, 40));
+      let str = '';
+      for(let j=0;j<len;j++){ str += pick(glyphs) + '\n'; }
+      div.textContent = str;
+      // Position & speed
+      const x = rand(0, 100);
+      div.style.left = x + 'vw';
+      const dur = rand(layer.dur[0], layer.dur[1]);
+      const anim = layer.cls==='layer-3' ? 'fallFast' : (layer.cls==='layer-2' ? 'fallMed' : 'fallSlow');
+      div.style.animation = anim + ' ' + dur + 's linear infinite';
+      div.style.animationDelay = (-rand(0, dur)) + 's';
+      // Subtle sway
+      div.style.transform = 'translateX(0)';
+      layerEl.appendChild(div);
+    }
+  });
+}
+// Reinit after toggling motion/age
+document.addEventListener('DOMContentLoaded', initMatrixRain);
+
+// === Brand-to-glyph live engine ===
+let DEFAULT_GLYPHS = 'JDPJDP◇◇◆◆△▽◬◭◮◈0123456789JDPJDP';
+window.currentGlyphs = DEFAULT_GLYPHS;
+
+function makeGlyphsFromName(name){
+  const clean = (name || '').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(!clean) return DEFAULT_GLYPHS;
+  return (clean.repeat(30) + '0123456789◇◆△▽').slice(0, 500);
 }
 
-// Wire the button again if needed
-trialActivate && trialActivate.addEventListener('click', ()=>{ tryActivate(); });
+function updateGlyphsFromBrand(){
+  const el = document.getElementById('brandName');
+  if(!el) return;
+  const val = el.value || '';
+  window.currentGlyphs = makeGlyphsFromName(val);
+  initMatrixRain();
+}
 
-  /* removed plain code */
-  const CASH_TAG='$Briscoe888', CASH_AMOUNT='50', CASH_NOTE='Jarvae Full Access';
+const brandEl = document.getElementById('brandName');
+brandEl?.addEventListener('input', () => {
+  updateGlyphsFromBrand();
+});
 
-  const TRK=NS+'_trial'; const BADGE=$('trialBadge'); const trialModal=$('trialModal'); const trialClose=$('trialClose'); const trialActivate=$('trialActivate'); const trialKey=$('trialKey');
-  const btnCash=$('trialCash'), btnIPaid=$('trialIPaid');
-  function getTrial(){ try{ return JSON.parse(localStorage.getItem(TRK)||'{}'); }catch(_){ return {}; } }
-  function setTrial(obj){ try{ localStorage.setItem(TRK, JSON.stringify(obj)); }catch(_){ } }
-  function startTrialIfNeeded(){ const t=getTrial(); if(!t.start){ const now=Date.now(); t.start=now; t.expires= now + 30*86400000; setTrial(t); } }
-  function daysLeft(){ const t=getTrial(); if(!t.expires) return 30; return Math.max(0, Math.ceil((t.expires - Date.now())/86400000)); }
-  function updateBadge(){ const left=daysLeft(); if(BADGE) BADGE.textContent=`Trial: ${left} day${left===1?'':'s'} left`; }
-  function expired(){ return daysLeft()<=0; }
-  function gateIfExpired(){ if(!expired()) return true; trialModal && trialModal.setAttribute('aria-hidden','false'); return false; }
-  function closeTrial(){ trialModal && trialModal.setAttribute('aria-hidden','true'); }
-  function tryActivate(){ const key=(trialKey && trialKey.value || '').trim(); let t=getTrial();
-    if(/^\d{6,10}$/.test(key) && key===CURRENT_UNLOCK_CODE){ t.expires=Date.now()+365*86400000; setTrial(t); updateBadge(); closeTrial(); alert('Unlocked for 1 year.'); return; }
-    if(/^JDP-EXTEND-(\d+)$/.test(key)){ const extra=parseInt(RegExp.$1,10); t.expires=(t.expires||Date.now())+extra*86400000; setTrial(t); updateBadge(); closeTrial(); alert(`Extended ${extra} days.`); return; }
-    alert('Invalid code. Request a fresh activation code from the operator.');
-  }
-  trialClose&&trialClose.addEventListener('click', closeTrial);
-  trialActivate&&trialActivate.addEventListener('click', tryActivate);
-  // Cash App link
-  function openCashApp(){
-    const tag=CASH_TAG.replace(/^\$/,''); if(!tag){ alert('Operator has not set a Cash App $cashtag yet.'); return; }
-    let url=`https://cash.app/$${tag}`; const params=[];
-    if(CASH_AMOUNT) params.push('amount='+encodeURIComponent(CASH_AMOUNT));
-    if(CASH_NOTE) params.push('note='+encodeURIComponent(CASH_NOTE));
-    if(params.length) url+='?'+params.join('&'); window.open(url,'_blank','noopener');
-  }
-  btnCash&&btnCash.addEventListener('click', openCashApp);
-  btnIPaid&&btnIPaid.addEventListener('click', ()=>{
-    const splashEmail = localStorage.getItem(NS+'_trial_email')||'';
-    const mail = 'mailto:'+encodeURIComponent(OP_EMAIL)
-      +'?subject='+encodeURIComponent('Jarvae Full Access — Payment Sent')
-      +'&body='+encodeURIComponent(`Hi,\\n\\nI sent the $${CASH_AMOUNT} via Cash App (${CASH_TAG}). Please send my activation code.\\nSplash Email: ${splashEmail||'(not provided)'}\\n\\nThanks!`);
-    window.location.href = mail;
-  });
-  startTrialIfNeeded(); updateBadge();
+document.addEventListener('DOMContentLoaded', () => {
+  updateGlyphsFromBrand();
+});
 
-  // === Wizard (minimal) ===
-  const steps=Array.from(document.querySelectorAll('.step')); const bar=document.getElementById('progressBar'); let ix=0;
-  function show(i){ const c=Math.max(0,Math.min(i,steps.length-1)); steps.forEach((s,k)=> s.classList.toggle('show', k===c)); if(bar) bar.style.width=((c+1)/steps.length*100)+'%'; ix=c; }
-  on('.next','click', ()=>show(ix+1)); on('.back','click', ()=>show(ix-1)); on('.skip-step','click', ()=>show(ix+1)); show(0);
+tMotion?.addEventListener('click', () => { if(!document.body.classList.contains('reduce-motion')) initMatrixRain(); });
 
-  // === Generate: play SFX, then outro with music duck ===
-  const generateBtn=$('generateBtn'), output=$('output');
-  function canGenerate(){ return gateIfExpired(); }
-  generateBtn && generateBtn.addEventListener('click', ()=>{
-    if(!canGenerate()) return;
-    try{ if(genSfx){ genSfx.currentTime=0; genSfx.play().catch(()=>{});} }catch(_){}
-    setTimeout(()=>{
-      try{
-        if(retro) fadeAudio(retro, 0.12, 700);
-        if(outroVoice){
-          outroVoice.currentTime=0;
-          outroVoice.play().catch(()=>{});
-          outroVoice.onended = ()=>{ if(retro) fadeAudio(retro, 0.22, 900); };
-        }
-      }catch(_){}
-    }, 420);
-    if(output) output.value = "JARVAE DIAMOND PROTOCOL — demo prompt (replace with generator)";
-  });
-})();
-// === Matrix Rain Background ===
-(function(){
-  const canvas = document.getElementById('matrixCanvas');
-  if(!canvas) return;
-  const ctx = canvas.getContext('2d');
-  let W, H, columns, drops, fontSize, chars;
+// === Demo brand cycle ===
+const demoBrands = ["JDP", "Nike", "Ethel's Bakery", "Matrix Records", "Your Brand Here"];
+let demoIndex = 0;
+let demoTimer = null;
 
-  // Character set (mix of katakana + numbers + symbols)
-  const RAIN_THEME='religious';
-  const CHARSETS={
-    classic:'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜ0123456789:・.=*+-<>|{}',
-    religious:'✝†✟☸佛◇◆△▽✧✦✩✪✫✬✭✮✯✰'
-  };
-  chars = CHARSETS[RAIN_THEME] || CHARSETS.classic;
+function cycleDemoBrands(){
+  if(document.getElementById('brandName')?.value) return; // stop if user typed
+  demoIndex = (demoIndex + 1) % demoBrands.length;
+  const brand = demoBrands[demoIndex];
+  window.currentGlyphs = makeGlyphsFromName(brand);
+  initMatrixRain();
+}
 
-  function resize(){
-    const ratio = Math.min(window.devicePixelRatio || 1, 2);
-    W = canvas.width = Math.floor(window.innerWidth * ratio);
-    H = canvas.height = Math.floor(window.innerHeight * ratio);
+function startDemoCycle(){
+  if(demoTimer) clearInterval(demoTimer);
+  demoTimer = setInterval(cycleDemoBrands, 6000);
+}
 
-    // Font size scales with DPI to keep density constant
-    fontSize = Math.max(12 * ratio, 10);
-    columns = Math.floor(W / (fontSize * 0.9));
-    drops = Array(columns).fill(0).map(()=> Math.floor(Math.random()*H/fontSize));
-    ctx.font = `${fontSize}px monospace`;
-  }
-  resize(); window.addEventListener('resize', resize);
+// Start demo cycle on load
+document.addEventListener('DOMContentLoaded', () => {
+  startDemoCycle();
+});
 
-  let last = 0;
-  function draw(ts){
-    const dt = ts - last; last = ts;
 
-    // Faint fade to black (trail effect)
-    ctx.fillStyle = 'rgba(0,0,0,0.08)';
-    ctx.fillRect(0,0,W,H);
+// ==== Demo Mode: cycle through brand names when idle ====
+const demoBtn = document.getElementById('toggle-demo');
+const brandInput = document.getElementById('brandName');
+let demoEnabled = true;
+let demoTimer = null;
+let demoIndex = 0;
+let typingTimeout = null;
 
-    // Draw characters
-    for(let i=0;i<columns;i++){
-      const x = i * fontSize * 0.9;
-      const y = drops[i] * fontSize;
-      const ch = chars.charAt(Math.floor(Math.random()*chars.length));
+// Customize this list for sales demos
+const DEMO_BRANDS = [
+  'JDP',
+  "Ethel's Bakery",
+  'Your Brand',
+  'Philly Sound',
+  'Matrix Media'
+];
 
-      // Bright head + trailing fade
-      ctx.fillStyle = 'rgba(0,255,136,0.85)';
-      ctx.fillText(ch, x, y);
-      ctx.fillStyle = 'rgba(0,255,136,0.2)';
-      ctx.fillText(ch, x, y - fontSize);
+function setBrand(name){
+  if(!brandInput) return;
+  brandInput.value = name;
+  updateGlyphsFromBrand();
+}
 
-      // Move drop
-      if(y > H && Math.random() > 0.975) drops[i] = 0;
-      else drops[i]++;
-    }
+// Start/stop demo cycle
+function startDemoCycle(){
+  clearInterval(demoTimer);
+  // Only cycle when input is empty OR demo explicitly enabled
+  demoTimer = setInterval(() => {
+    if(!demoEnabled) return;
+    // If user has typed something, don't override
+    if(brandInput && brandInput.value.trim().length > 0) return;
+    const name = DEMO_BRANDS[demoIndex % DEMO_BRANDS.length];
+    demoIndex++;
+    setBrand(name);
+  }, 6000);
+}
+function stopDemoCycle(){
+  clearInterval(demoTimer);
+  demoTimer = null;
+}
 
-    requestAnimationFrame(draw);
-  }
-  requestAnimationFrame(draw);
+// Pause demo while user types, resume after idle
+function userIsTyping(){
+  demoEnabled = false;
+  demoBtn?.setAttribute('aria-pressed','false');
+  stopDemoCycle();
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => {
+    demoEnabled = true;
+    demoBtn?.setAttribute('aria-pressed','true');
+    startDemoCycle();
+  }, 8000); // resume 8s after last keystroke
+}
 
-  // Respect reduced-motion users
-  const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-  function handleMotion(e){
-    if(e.matches){
-      // Stop animation, show static gradient
-      canvas.style.display = 'none';
-      document.body.style.background = '#000';
-    }else{
-      canvas.style.display = 'block';
-    }
-  }
-  mq.addEventListener && mq.addEventListener('change', handleMotion);
-  handleMotion(mq);
-})();
+brandInput?.addEventListener('input', userIsTyping);
+brandInput?.addEventListener('focus', () => { demoEnabled = false; demoBtn?.setAttribute('aria-pressed','false'); stopDemoCycle(); });
+brandInput?.addEventListener('blur', () => { demoEnabled = true; demoBtn?.setAttribute('aria-pressed','true'); startDemoCycle(); });
+
+// Toggle button
+demoBtn?.addEventListener('click', () => {
+  demoEnabled = !(demoBtn.getAttribute('aria-pressed') === 'true');
+  demoBtn.setAttribute('aria-pressed', String(demoEnabled));
+  if(demoEnabled) startDemoCycle(); else stopDemoCycle();
+});
+
+// Kick off
+document.addEventListener('DOMContentLoaded', () => {
+  // Start with the first demo brand unless user types
+  startDemoCycle();
+});
