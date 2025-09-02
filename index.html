@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JDP 2.2 — Adaptive Onboarding</title>
+  <link rel="icon" href="assets/logo_jdp_ghost.png">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="bg" aria-hidden="true"><div id="matrixRain" aria-hidden="true"></div></div>
+
+  <!-- SPLASH / PRELOADER -->
+  <div id="splash" class="splash" role="dialog" aria-modal="true" aria-labelledby="splashTitle">
+    <div class="splash-inner">
+      <picture>
+        <source srcset="assets/logo_jdp_ghost.webp" type="image/webp">
+        <img class="splash-logo" src="assets/logo_jdp_ghost.png" alt="JDP Ghost Seal">
+      </picture>
+      <h1 id="splashTitle" class="splash-title">JDP 2.2</h1>
+      <p class="splash-sub">Adaptive Onboarding — Artists • Brands • Businesses</p>
+      <div class="splash-progress" aria-hidden="true"><span id="splashBar"></span></div>
+      <p id="splashHint" class="splash-hint">Loading…</p>
+      <button id="splashStart" class="splash-cta" type="button" disabled>
+        <span class="pulse-dot"></span> START
+      </button>
+    </div>
+  </div>
+
+  <main id="app" class="card" role="main" aria-live="polite">
+    <header class="brand">
+      <picture class="matrix-logo">
+        <source srcset="assets/logo_jdp_ghost.webp" type="image/webp">
+        <img src="assets/logo_jdp_ghost.png" alt="JDP Ghost Seal" class="logo">
+      </picture>
+      <h1>Adaptive Onboarding</h1>
+      <p class="tag">For Artists • Brands • Businesses</p>
+      <button id="need-help" class="linklike" type="button" aria-haspopup="dialog">Need help now?</button>
+    </header>
+
+    <!-- Gate (Name + Age) -->
+    <section class="gate" aria-label="Basic details">
+      <div class="row two">
+        <div>
+          <label for="name">Name<span aria-hidden="true"> *</span></label>
+          <input id="name" name="name" type="text" required autocomplete="name" placeholder="Your name" />
+        </div>
+        <div>
+          <label for="age">Age<span aria-hidden="true"> *</span></label>
+          <input id="age" name="age" type="number" min="6" max="120" inputmode="numeric" placeholder="e.g., 16" required />
+        </div>
+      </div>
+      <div class="row actions">
+        <button id="start" type="button" class="cta">Begin</button>
+      </div>
+      <p class="hint">Fonts, spacing & motion adapt to your age group.</p>
+    </section>
+
+    <!-- Main form -->
+    <form id="form" class="hidden" novalidate>
+      <fieldset>
+        <legend>Where are you based?</legend>
+        <div class="row two">
+          <div>
+            <label for="state">State</label>
+            <select id="state" name="state" required>
+              <option value="" disabled selected>Select state</option>
+              <option>Pennsylvania</option><option>New York</option><option>New Jersey</option>
+              <option>Delaware</option><option>Maryland</option><option>California</option>
+              <option>Texas</option><option>Florida</option><option>Illinois</option>
+              <option>Georgia</option><option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="city">City</label>
+            <select id="city" name="city" required>
+              <option value="" disabled selected>Select city</option>
+              <option>Philadelphia</option><option>New York City</option><option>Los Angeles</option>
+              <option>Chicago</option><option>Dallas</option><option>Houston</option>
+              <option>Miami</option><option>Atlanta</option><option>Baltimore</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Brand / Artist Name</legend>
+        <div class="row">
+          <input id="brandName" name="brandName" type="text" maxlength="40" placeholder="Type your brand (live 4D preview)" />
+        </div>
+        <p class="muted small">Background rain updates to use your brand letters.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Who are you?</legend>
+        <div class="row two">
+          <div>
+            <label for="audienceType">I'm primarily a...</label>
+            <select id="audienceType" name="audienceType" required>
+              <option value="" disabled selected>Select one</option>
+              <option value="Artist">Artist / Creative</option>
+              <option value="Business">Business / Brand</option>
+              <option value="Nonprofit">Nonprofit / Community Group</option>
+              <option value="Student">Student</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="company">Company / Brand (optional)</label>
+            <input id="company" name="company" type="text" placeholder="e.g., JDP Labs, Ethel's Bakery" />
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset id="artistBlock" class="hidden">
+        <legend>Artist disciplines (select all that apply)</legend>
+        <div class="choices grid">
+          <label class="check"><input type="checkbox" name="disciplines" value="Producer">Producer</label>
+          <label class="check"><input type="checkbox" name="disciplines" value="Rapper">Rapper</label>
+          <label class="check"><input type="checkbox" name="disciplines" value="Singer">Singer/Vocalist</label>
+          <label class="check"><input type="checkbox" name="disciplines" value="DJ">DJ</label>
+          <label class="check"><input type="checkbox" name="disciplines" value="Painter">Painter</label>
+          <label class="check"><input type="checkbox" name="disciplines" value="Sculptor">Sculptor</label>
+          <label class="check"><input type="checkbox" name="disciplines" value="GraphicDesigner">Graphic Designer</label>
+          <label class="check"><input type="checkbox" name="disciplines" value="Illustrator">Illustrator</label>
+          <label class="check"><input type="checkbox" name="disciplines" value="Photographer">Photographer</label>
+          <label class="check"><input type="checkbox" name="disciplines" value="Videographer">Videographer</label>
+          <label class="check"><input type="checkbox" name="disciplines" value="Filmmaker">Filmmaker/Director</label>
+          <label class="check"><input type="checkbox" name="disciplines" value="Animator">Animator/Motion</label>
+          <label class="check"><input type="checkbox" name="disciplines" value="Other">Other</label>
+        </div>
+      </fieldset>
+
+      <fieldset id="businessBlock" class="hidden">
+        <legend>Industry (select all that apply)</legend>
+        <div class="choices grid">
+          <label class="check"><input type="checkbox" name="industry" value="FoodBeverage">Food & Beverage</label>
+          <label class="check"><input type="checkbox" name="industry" value="Fashion">Fashion/Retail</label>
+          <label class="check"><input type="checkbox" name="industry" value="Music">Music/Entertainment</label>
+          <label class="check"><input type="checkbox" name="industry" value="Tech">Tech/Software</label>
+          <label class="check"><input type="checkbox" name="industry" value="Art">Art/Design</label>
+          <label class="check"><input type="checkbox" name="industry" value="Fitness">Fitness/Wellness</label>
+          <label class="check"><input type="checkbox" name="industry" value="Nonprofit">Nonprofit/Community</label>
+          <label class="check"><input type="checkbox" name="industry" value="Education">Education</label>
+          <label class="check"><input type="checkbox" name="industry" value="ProfessionalServices">Professional Services</label>
+          <label class="check"><input type="checkbox" name="industry" value="Other">Other</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Primary goals (choose up to 3)</legend>
+        <div class="choices grid">
+          <label class="check"><input type="checkbox" name="goals" value="Learn">Learn skills</label>
+          <label class="check"><input type="checkbox" name="goals" value="Create">Create a project</label>
+          <label class="check"><input type="checkbox" name="goals" value="Collaborate">Find collaborators/partners</label>
+          <label class="check"><input type="checkbox" name="goals" value="Perform">Perform/Exhibit/Launch</label>
+          <label class="check"><input type="checkbox" name="goals" value="Monetize">Monetize/Sales</label>
+          <label class="check"><input type="checkbox" name="goals" value="Promo">Grow audience/traffic</label>
+          <label class="check"><input type="checkbox" name="goals" value="Mentor">Find a mentor/coach</label>
+          <label class="check"><input type="checkbox" name="goals" value="Hire">Hire talent/services</label>
+          <label class="check"><input type="checkbox" name="goals" value="Other">Other</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Experience level</legend>
+        <div class="choices">
+          <label class="radio"><input type="radio" name="xp" value="New" required>New / Just starting</label>
+          <label class="radio"><input type="radio" name="xp" value="Intermediate">Intermediate</label>
+          <label class="radio"><input type="radio" name="xp" value="Pro">Pro / Established</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Social media (select all that apply)</legend>
+        <details class="dropdown">
+          <summary>Select platforms</summary>
+          <div class="choices grid">
+            <label class="check"><input type="checkbox" name="social" value="Instagram">Instagram</label>
+            <label class="check"><input type="checkbox" name="social" value="TikTok">TikTok</label>
+            <label class="check"><input type="checkbox" name="social" value="YouTube">YouTube</label>
+            <label class="check"><input type="checkbox" name="social" value="Facebook">Facebook</label>
+            <label class="check"><input type="checkbox" name="social" value="X">X (Twitter)</label>
+            <label class="check"><input type="checkbox" name="social" value="Threads">Threads</label>
+            <label class="check"><input type="checkbox" name="social" value="LinkedIn">LinkedIn</label>
+            <label class="check"><input type="checkbox" name="social" value="Spotify">Spotify</label>
+            <label class="check"><input type="checkbox" name="social" value="AppleMusic">Apple Music</label>
+            <label class="check"><input type="checkbox" name="social" value="SoundCloud">SoundCloud</label>
+            <label class="check"><input type="checkbox" name="social" value="Behance">Behance</label>
+            <label class="check"><input type="checkbox" name="social" value="Dribbble">Dribbble</label>
+            <label class="check"><input type="checkbox" name="social" value="Pinterest">Pinterest</label>
+            <label class="check"><input type="checkbox" name="social" value="Discord">Discord</label>
+            <label class="check"><input type="checkbox" name="social" value="Reddit">Reddit</label>
+            <label class="check"><input type="checkbox" name="social" value="Other">Other</label>
+          </div>
+        </details>
+      </fieldset>
+
+      <fieldset>
+        <legend>Web & contact</legend>
+        <div class="row two">
+          <div>
+            <label for="website">Website (optional)</label>
+            <input id="website" name="website" type="url" placeholder="https://your-site.com" />
+          </div>
+          <div>
+            <label for="contact">Preferred contact</label>
+            <select id="contact" name="contact" required>
+              <option value="" disabled selected>Select</option>
+              <option>Email</option>
+              <option>Phone</option>
+              <option>DM (Instagram)</option>
+              <option>DM (X)</option>
+              <option>Discord</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Budget & timeline</legend>
+        <div class="row two">
+          <div>
+            <label for="budget">Budget range</label>
+            <select id="budget" name="budget">
+              <option value="" disabled selected>Select</option>
+              <option>Under $500</option>
+              <option>$500–$2,000</option>
+              <option>$2,000–$5,000</option>
+              <option>$5,000–$10,000</option>
+              <option>$10,000+</option>
+            </select>
+          </div>
+          <div>
+            <label for="timeline">Timeline</label>
+            <select id="timeline" name="timeline">
+              <option value="" disabled selected>Select</option>
+              <option>ASAP</option>
+              <option>2–4 weeks</option>
+              <option>1–3 months</option>
+              <option>Flexible</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>How are you feeling today?</legend>
+        <div class="choices">
+          <label class="radio"><input type="radio" name="mood" value="Okay" required>I'm okay</label>
+          <label class="radio"><input type="radio" name="mood" value="Struggling">I'm struggling</label>
+          <label class="radio"><input type="radio" name="mood" value="Crisis">I'm in crisis / worried about safety</label>
+        </div>
+        <p class="muted small">If you need help now, use “Need help now?”.</p>
+      </fieldset>
+
+      <div class="row actions">
+        <button type="submit" class="cta">Finish</button>
+      </div>
+      <p id="status" class="status" aria-live="polite"></p>
+    </form>
+
+    <!-- AI Picker -->
+    <section id="aiPicker" class="hidden card soft" aria-label="Choose your AI">
+      <h2 style="margin-top:0">Choose where to generate</h2>
+      <p class="muted">Your custom prompt is already copied. Pick an app and paste it in.</p>
+      <div class="actions">
+        <button type="button" class="cta" data-ai="chatgpt">Open ChatGPT</button>
+        <button type="button" class="cta" data-ai="gemini">Open Gemini</button>
+        <button type="button" class="cta" data-ai="grok">Open Grok</button>
+      </div>
+      <p id="copystatus" class="small muted" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <!-- Crisis Modal -->
+  <div id="crisis" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="crisisTitle">
+    <div class="modal-content" role="document">
+      <h2 id="crisisTitle">You're not alone. Help is available.</h2>
+      <ul>
+        <li id="localBlock" class="hidden"><strong>Local (based on your selection):</strong> <span id="localDesc"></span></li>
+        <li><strong>United States:</strong> Call or text <strong>988</strong>. If you’re in immediate danger, call <strong>911</strong>.</li>
+        <li><strong>Text support (US/CA):</strong> Text <strong>HOME</strong> to <strong>741741</strong>.</li>
+        <li><strong>Outside the US:</strong> Find local helplines at findahelpline.com.</li>
+      </ul>
+      <div class="row actions">
+        <button id="copyHelp" class="pill" type="button">Copy numbers</button>
+        <button id="openFinder" class="pill" type="button">Find local helplines</button>
+        <button id="closeCrisis" class="cta" type="button">Close</button>
+      </div>
+      <p class="muted small">This app is not a medical service. If you or someone else is in danger, contact emergency services immediately.</p>
+    </div>
+  </div>
+
+  <!-- Audio -->
+  <audio id="bgm" preload="auto" loop>
+    <source src="assets/retro_intro.m4a" type="audio/mp4">
+    <source src="assets/retro_intro.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="voice" preload="auto">
+    <source src="assets/intro_voice.m4a" type="audio/mp4">
+    <source src="assets

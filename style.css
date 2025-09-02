@@ -1,0 +1,166 @@
+:root {
+  --fg:#e6f1e8;
+  --bg:#0a0f0b;
+  --accent:#5CFF7A;
+  --border:rgba(255,255,255,.08);
+  --pad:clamp(10px,1.1rem,24px);
+  --gap:clamp(10px,1rem,20px);
+  --muted:rgba(230,241,232,.7)
+}
+
+*{box-sizing:border-box}
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--fg);
+  font-family:system-ui,Segoe UI,Roboto,sans-serif
+}
+
+.card {
+  position:relative;
+  z-index:1;
+  max-width:1000px;
+  margin:6vh auto;
+  background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:calc(var(--pad)*1.25);
+  backdrop-filter:blur(8px)
+}
+
+.card::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  background:center/ min(70vmin,820px) no-repeat 
+    image-set(url("assets/logo_jdp_ghost.webp") type("image/webp"),
+              url("assets/logo_jdp_ghost.png") type("image/png"));
+  opacity:.12;
+  mix-blend-mode:screen;
+  pointer-events:none;
+  animation:wm 6s ease-in-out infinite
+}
+@keyframes wm{0%{opacity:.1}50%{opacity:.16}100%{opacity:.1}}
+
+.brand{text-align:center}
+.logo{width:clamp(80px,12vw,160px);opacity:.9;display:block;margin:0 auto var(--gap)}
+
+.row{display:grid;gap:var(--gap);margin-bottom:var(--gap)}
+.row.two{grid-template-columns:1fr}
+@media(min-width:720px){.row.two{grid-template-columns:1fr 1fr}}
+
+fieldset{border:1px solid var(--border);border-radius:12px;padding:var(--pad);margin-bottom:var(--gap)}
+label{display:block;margin-bottom:6px}
+input[type=text],input[type=number],input[type=url],select {
+  width:100%;
+  background:rgba(255,255,255,.06);
+  color:#ff3b3b;
+  border:1px solid rgba(255,59,59,.55);
+  border-radius:10px;
+  padding:10px 12px
+}
+
+.choices{display:grid;gap:8px}
+.grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+
+.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.cta {
+  background:var(--accent);
+  border:none;
+  border-radius:999px;
+  padding:12px 18px;
+  font-weight:700;
+  cursor:pointer
+}
+
+.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:999}
+.modal:not(.hidden){display:flex}
+
+#matrixRain{position:fixed;inset:0;pointer-events:none;z-index:0;color:#5CFF7A;opacity:.9}
+
+/* Splash / Preloader */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(1200px 800px at 50% 50%, rgba(10,15,11,.88), rgba(10,15,11,.98));
+  transition: opacity .45s ease, visibility .45s ease
+}
+.splash.hidden{ opacity: 0; visibility: hidden; }
+.splash-inner{ text-align: center; padding: 24px; }
+.splash-logo {
+  width: clamp(120px, 26vmin, 300px);
+  filter: drop-shadow(0 0 24px rgba(92,255,122,.45)) drop-shadow(0 0 48px rgba(92,255,122,.25));
+  animation: splashGlow 5s ease-in-out infinite;
+  mix-blend-mode: screen
+}
+@keyframes splashGlow {
+  0%{ transform: scale(1); opacity:.92 }
+  50%{ transform: scale(1.02); opacity:1 }
+  100%{ transform: scale(1); opacity:.92 }
+}
+.splash-title{ margin:.6rem 0 .25rem; font-size: clamp(1.4rem,3.6vw,2.4rem) }
+.splash-sub{ margin:0 0 1rem; color: var(--muted) }
+.splash-progress {
+  width:min(360px, 70vw); height:8px;
+  margin:.75rem auto 0;
+  background: rgba(255,255,255,.08);
+  border-radius: 999px; overflow:hidden;
+}
+.splash-progress span{
+  display:block; width:0%; height:100%;
+  background: linear-gradient(90deg, #33ff66, #aaffcc);
+  transition: width .25s ease
+}
+.splash-hint{ margin:.4rem 0 1rem; color:var(--muted) }
+.splash-cta {
+  position: relative;
+  background: var(--accent);
+  color:#001c08;
+  border:none;
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing:.8px;
+  padding: 14px 22px;
+  cursor: not-allowed;
+  box-shadow: 0 0 26px rgba(92,255,122,.45), 0 2px 0 #2ec954 inset;
+  transition: transform .08s ease, box-shadow .2s ease, filter .2s ease, opacity .2s ease
+}
+.splash-cta:enabled{ cursor:pointer }
+.splash-cta:enabled:hover{ transform: translateY(-1px); box-shadow: 0 0 32px rgba(92,255,122,.6), 0 2px 0 #2bc250 inset }
+.splash-cta:enabled:active{ transform: translateY(1px); filter: brightness(.95) }
+
+.pulse-dot {
+  position:absolute; left:12px; top:50%; transform:translateY(-50%);
+  width:10px; height:10px; border-radius:50%;
+  background:#ff3b3b; box-shadow:0 0 12px rgba(255,59,59,.8);
+  animation: pulseDot 1.2s ease-in-out infinite
+}
+@keyframes pulseDot {
+  0%{ transform:translateY(-50%) scale(.9); opacity:.7 }
+  50%{ transform:translateY(-50%) scale(1.25); opacity:1 }
+  100%{ transform:translateY(-50%) scale(.9); opacity:.7 }
+}
+
+/* Background ghost logo pulse */
+#bg::before {
+  content:"";position:absolute;inset:0;z-index:0;
+  background: center / min(70vmin, 800px) no-repeat
+    image-set(url("assets/logo_jdp_ghost.webp") type("image/webp"),
+              url("assets/logo_jdp_ghost.png") type("image/png"));
+  opacity:.20; mix-blend-mode:screen;
+  filter: drop-shadow(0 0 22px rgba(92,255,122,.45)) drop-shadow(0 0 44px rgba(92,255,122,.25));
+  animation: logoPulse 5s ease-in-out infinite;
+  transform-origin: 50% 50%;
+}
+@keyframes logoPulse {
+  0%{ opacity:.16; transform: scale(1) }
+  50%{ opacity:.26; transform: scale(1.015) }
+  100%{ opacity:.16; transform: scale(1) }
+}
+
+/* Matrix streams */
+.stream{position:absolute;top:-120vh;white-space:pre;animation:fall linear infinite}
+@keyframes fall{from{transform:translateY(-120vh)}to{transform:translateY(120vh)}}
